@@ -2,6 +2,7 @@ import numpy as np
 from gym import spaces
 from stable_baselines3.common.vec_env import VecEnv
 import cv2 as cv
+import copy
 
 
 class FlightEnvVec(VecEnv):
@@ -14,12 +15,15 @@ class FlightEnvVec(VecEnv):
         print("Observations: ", self.num_obs)
         print("Actions: ", self.num_acts)
         print("image shape:", self.frame_dim)
-        self._observation_space = spaces.Box(low=-np.ones(self.num_obs) * np.inf, high=np.ones(self.num_obs) * np.inf, dtype=np.float32)
+        #self._observation_space = spaces.Box(low=-np.ones(self.num_obs) * np.inf, high=np.ones(self.num_obs) * np.inf, dtype=np.float32)
+        odom_box = spaces.Box(low=-np.ones(self.num_obs) * np.inf, high=np.ones(self.num_obs) * np.inf, dtype=np.float32)
+        img_box = spaces.Box(low=0, high=50.0, shape=(self.frame_dim[0], self.frame_dim[1]),dtype=np.float32)
+        self._observation_space = spaces.Tuple((odom_box, img_box))
         self._action_space = spaces.Box(
             low=np.ones(self.num_acts) * -1.,
             high=np.ones(self.num_acts) * 1.,
             dtype=np.float32)
-        self._observation = np.zeros((self.num_envs, self.num_obs), dtype=np.float32)
+        self._observation = np.zeros((self.num_envs, self.num_obs + self.frame_dim[0]* self.frame_dim[1]), dtype=np.float32) 
         self._images = np.zeros((self.num_envs, self.frame_dim[0], self.frame_dim[1]), dtype=np.float32)
         self._odometry = np.zeros([self.num_envs, self.num_obs], dtype=np.float32)
         self.img_array = np.zeros((self.num_envs, self.frame_dim[0]*self.frame_dim[1]), dtype=np.float32)
@@ -49,8 +53,12 @@ class FlightEnvVec(VecEnv):
         self.wrapper.step(action, self._odometry, self.img_array,
                           self._reward, self._done, self._extraInfo)
         
-        self._observation = self._odometry
-
+        #print(self.img_array)
+        #self._observation = self._odometry
+        #print(type(self._odometry), type(self.img_array) )
+        #print(self._odometry.shape, self.img_array.shape)
+        self._observation = np.concatenate((self._odometry, self.img_array), axis=1)# * concatenating tuples
+        #print(self._observation.shape)
         # Images are accessible from here, self._images is of shape [self.num_envs, self.frame_dim[0], self.frame_dim[1]]
         self._images = self.obs_array2image()
 
@@ -78,8 +86,10 @@ class FlightEnvVec(VecEnv):
         # The observations returned are only the one related to the odometry NO images
         # you have to change the observation space in order to use them
 
-        return self._observation.copy(), self._reward.copy(), \
+        return copy.copy(self._observation), self._reward.copy(), \
             self._done.copy(), info.copy()
+        #return self._observation.copy(), self._reward.copy(), \
+        #    self._done.copy(), info.copy()            
     
     def get_images(self):
         return self._images.copy()
