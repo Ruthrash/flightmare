@@ -94,7 +94,7 @@ def main():
 
         # tensorboard
         # Make sure that your chrome browser is already on.
-        TensorboardLauncher(saver.data_dir + '/PPO2_1')
+        #TensorboardLauncher(saver.data_dir + '/PPO2_1')
 
         # PPO run
         # Originally the total timestep is 5 x 10^8
