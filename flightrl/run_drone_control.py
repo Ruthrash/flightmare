@@ -42,6 +42,8 @@ def parser():
                         help="Random seed")
     parser.add_argument('-w', '--weight', type=str, default='./saved/quadrotor_env.zip',
                         help='trained weight path')
+    parser.add_argument('--load_weights', type=bool, default=False,
+                        help='flag to load the given weights for training ')
     return parser
 
 
@@ -91,7 +93,9 @@ def main():
         saver = U.ConfigurationSaver(log_dir=log_dir)
         model = PPO('MlpPolicy', env, verbose=2,
                     tensorboard_log=saver.data_dir)
-
+        #model.load(args.weight)
+        #if(args.load_weights):
+        #    model.load(args.weight)
         # tensorboard
         # Make sure that your chrome browser is already on.
         #TensorboardLauncher(saver.data_dir + '/PPO2_1')
@@ -103,7 +107,7 @@ def main():
         # 2000000000 is 4000 iterations.
         logger.configure(folder=saver.data_dir)
         model.learn(
-            total_timesteps=int(10000000))
+            total_timesteps=int(20000000))
         model.save(saver.data_dir)
 
     # # Testing mode with a trained weight

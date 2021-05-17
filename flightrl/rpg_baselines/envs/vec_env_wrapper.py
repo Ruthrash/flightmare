@@ -16,9 +16,11 @@ class FlightEnvVec(VecEnv):
         print("Actions: ", self.num_acts)
         print("image shape:", self.frame_dim)
         #self._observation_space = spaces.Box(low=-np.ones(self.num_obs) * np.inf, high=np.ones(self.num_obs) * np.inf, dtype=np.float32)
+        
         odom_box = spaces.Box(low=-np.ones(self.num_obs) * np.inf, high=np.ones(self.num_obs) * np.inf, dtype=np.float32)
         img_box = spaces.Box(low=0, high=50.0, shape=(self.frame_dim[0], self.frame_dim[1]),dtype=np.float32)
         self._observation_space = spaces.Tuple((odom_box, img_box))
+        
         self._action_space = spaces.Box(
             low=np.ones(self.num_acts) * -1.,
             high=np.ones(self.num_acts) * 1.,
@@ -54,10 +56,17 @@ class FlightEnvVec(VecEnv):
                           self._reward, self._done, self._extraInfo)
         
         #print(self.img_array)
+        
         #self._observation = self._odometry
+        
+
         #print(type(self._odometry), type(self.img_array) )
         #print(self._odometry.shape, self.img_array.shape)
+        
+        
+        
         self._observation = np.concatenate((self._odometry, self.img_array), axis=1)# * concatenating tuples
+        
         #print(self._observation.shape)
         # Images are accessible from here, self._images is of shape [self.num_envs, self.frame_dim[0], self.frame_dim[1]]
         self._images = self.obs_array2image()
