@@ -9,11 +9,27 @@ import numpy as np
 import time
 import sys
 import torch
+import json 
+
 
 from rpg_baselines.envs import vec_env_wrapper as wrapper
 from scipy.spatial.transform import Rotation 
 #
 from flightgym import QuadrotorEnv_v1
+
+
+class Saver:
+    def __init__(self) -> None:
+        self.out_dict = dict()
+        self.out_file = "depth_images.json"
+        pass
+    def __del__(self):
+        print("Destructor called, saving depth images dictionary")
+        file_ = open(self.out_file, 'w')
+        with file_ as file_obj: 
+            json.dump(self.out_dict, file_obj)
+
+
 
 def configure_random_seed(seed, env=None):
     if env is not None:
@@ -36,6 +52,7 @@ def parser():
     return parser
 
 def main():
+    instanceSaver = Saver()
     args = parser().parse_args()
     cfg = YAML().load(open(os.environ["FLIGHTMARE_PATH"] +
                            "/flightlib/configs/vec_env.yaml", 'r'))
@@ -85,9 +102,28 @@ def main():
         
         obs, reward, dones, infos = env.step(action)
         
+        instanceSaver.out_dict[ep_len] = env.get_images().tolist()
+        if(ep_len > 50):
+            exit()
+        #normal_img = np.zeros((192,192,3),dtype=float)
+        # start = timeit.default_timer()
+        # for i in range(img.shape[0]-1):
+        #       for j in range(img.shape[1]-1):
+        #               dzdx = img[i+1,j] - img[i-1,j]
+        #               dzdy = img[i,j+1] - img[i,j-1]
+        #               normal = np.zeros((3,1),dtype=float)
+        #               normal[0] = -dzdx
+        #               normal[1] = -dzdy
+        #               normal[2] = 0.0
+        #               norm = np.linalg.norm(normal)
+        #               normal = normal/norm
+        #               normal_img[i,j,0] = normal[0]
+        #               normal_img[i,j,1] = normal[1]
+        #               normal_img[i,j,2] = normal[2]
         # print("distances : ", obs[0, 18:])
 
         ep_len += 1
 
 if __name__ == "__main__":
     main()
+
