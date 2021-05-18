@@ -65,11 +65,8 @@ class HighLevelPlanner():
         done = True
         self.internal_state = 0
         self.goal_reached_number = 5
-<<<<<<< HEAD
+
         safe_num_run = (num_run + 1)*(num_run<(self.num_runs-1)) + num_run*(num_run==(self.num_runs-1))
-=======
-        safe_num_run = (num_run + 1)*(num_run<self.num_runs) + num_run*(num_run==self.num_runs)
->>>>>>> 5680fb7577e280009b84e9bf264e8768de8e80cb
         return self.goals_matrix[safe_num_run, self.internal_state, :], done, float(self.goal_reached_number)
         
       self.internal_state += 1
@@ -81,9 +78,4 @@ class HighLevelPlanner():
   
   def reset(self):
     self.internal_state = 0
-<<<<<<< HEAD
 
-    
-=======
-    
->>>>>>> 5680fb7577e280009b84e9bf264e8768de8e80cb
