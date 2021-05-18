@@ -14,9 +14,10 @@ QuadrotorEnv::QuadrotorEnv(const std::string &cfg_path)
     ang_vel_coeff_(0.0),
     act_coeff_(0.0),
     goal_state_((Vector<quadenv::kNObs>() << 0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0,
-                 0.0, 0.0, 0.0, 0.0, 0.0)
+                 0.0, 0.0, 0.0, 0.0, 0.0,7.0,10.0,8.0)
                   .finished()) {
   // load configuration file
+  std::cout<<"quadroto_env.cppp"<<goal_state_.segment<quadenv::kNGoal>(quadenv::kGoal)<<"\n";
   YAML::Node cfg_ = YAML::LoadFile(cfg_path);
 
   quadrotor_ptr_ = std::make_shared<Quadrotor>();
@@ -78,6 +79,7 @@ void QuadrotorEnv::setResetPose(Vector<3> &resetPosition, Vector<3> &resetRotati
   int goalDistance = 35;
 
   // Adjust goal position accordingly.
+  std::cout<<"lol"<<resetPosition(0)<<", "<<resetPosition(1)<<", "<<resetPosition(2)<<"\n";
   goal_state_(0) = resetPosition(0);
   goal_state_(1) = resetPosition(1); 
   goal_state_(2) = resetPosition(2);

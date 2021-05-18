@@ -51,8 +51,8 @@ void VecEnv<EnvBase>::init(void) {
     num_cols=1;
     dim_columns = num_envs_;
   } 
-  float spacing_between_drones_rows = 40;
-  float spacing_between_drones_columns = 40;
+  float spacing_between_drones_rows = 1;
+  float spacing_between_drones_columns = 1;
   std::vector<float> start_rot = (cfg_["env"]["start_rot"]).as<std::vector<float>>();
   Vector<3> start_ori = Vector<3>(start_rot.data());
 
@@ -64,7 +64,7 @@ void VecEnv<EnvBase>::init(void) {
     // Last terms are to center the positions around zero.
     drone_start_position(0) = spacing_between_drones_columns*(ceil(vehicle_index/dim_columns)); 
     drone_start_position(1) = spacing_between_drones_rows*(vehicle_index%dim_columns);
-    drone_start_position(2) = 4.0;
+    drone_start_position(2) = 6.0;
     envs_[vehicle_index]->setResetPose(drone_start_position, start_ori);
   }
 
