@@ -14,7 +14,9 @@ import torch
 from stable_baselines3.common import logger
 
 #
-from stable_baselines3.ppo.ppo import PPO
+#from stable_baselines3.ppo.ppo import PPO
+from rpg_baselines.common.policies import MlpPolicy, CnnPolicy
+from rpg_baselines.ppo.ppo2 import PPO2
 from rpg_baselines.ppo.ppo2_test import test_model
 import rpg_baselines.common.util as U
 from rpg_baselines.envs import vec_env_wrapper as wrapper
@@ -89,9 +91,25 @@ def main():
         rsg_root = os.path.dirname(os.path.abspath(__file__))
         log_dir = rsg_root + '/saved'
         saver = U.ConfigurationSaver(log_dir=log_dir)
-        model = PPO('MlpPolicy', env, verbose=2,
-                    tensorboard_log=saver.data_dir)
-
+        model = PPO2(
+            tensorboard_log=saver.data_dir,
+            policy=CnnPolicy,  # check activation function
+            policy_kwargs=dict(
+                net_arch=[dict(pi=[128, 128], vf=[128, 128])], act_fun=tf.nn.relu),
+            env=env,
+            lam=0.95,
+            gamma=0.99,  # lower 0.9 ~ 0.99
+            # n_steps=math.floor(cfg['env']['max_time'] / cfg['env']['ctl_dt']),
+            n_steps=250,
+            ent_coef=0.00,
+            learning_rate=3e-4,
+            vf_coef=0.5,
+            max_grad_norm=0.5,
+            nminibatches=1,
+            noptepochs=10,
+            cliprange=0.2,
+            verbose=1,
+        )
         # tensorboard
         # Make sure that your chrome browser is already on.
         # TensorboardLauncher(saver.data_dir + '/PPO2_1')
@@ -108,7 +126,7 @@ def main():
 
     # # Testing mode with a trained weight
     else:
-        model = PPO.load(args.weight)
+        model = PPO2.load(args.weight)
         test_model(env, model, render=args.render)
 
 
