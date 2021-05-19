@@ -22,3 +22,9 @@ _site
 externals/*
 *.jpg
 *.png
+**/**/*.json
+**/**/*.log
+flightrl/saved/*
+flightrl/*.json
+flightrl/*.log
+

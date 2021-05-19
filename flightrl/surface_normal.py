@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import json
 import numpy as np
 import timeit    
+import cv2
 class Net(nn.Module):
 
     def __init__(self):
@@ -34,26 +35,38 @@ net = Net()
 print(net)
 
 def main():
-    b = torch.tensor([ 5.0,  5.0, 5.0, 5.0])
-    a = torch.tensor([[-0.3711, -1.9353, -0.4605, -0.2917],
-                [ 0.1815, -1.0111,  0.9805, -1.5923],
-                [ 0.1062,  1.4581,  0.7759, -1.2344],
-                [-0.1830, -0.0313,  1.1908, -1.4757]])
+    # b = torch.tensor([ 5.0,  5.0, 5.0, 5.0])
+    # a = torch.tensor([[-0.3711, -1.9353, -0.4605, -0.2917],
+    #             [ 0.1815, -1.0111,  0.9805, -1.5923],
+    #             [ 0.1062,  1.4581,  0.7759, -1.2344],
+    #             [-0.1830, -0.0313,  1.1908, -1.4757]])
     with open("depth_images.json",'r') as file_:
         data_dict = json.load(file_)
-    img = data_dict['30'][5]
+    time_idx = 40; idx = 0 
+    img = np.array(data_dict[str(time_idx)][idx], dtype=float)
     normal_img = np.zeros((192,192,3),dtype=float)
     start = timeit.default_timer()
     for i in range(img.shape[0]-1):
-        for j in range(img.shape[0]-1):          
-            dzdx = img[i+1,j] - img[i-1,j]
-            dzdy = img[i,j+1] - img[i,j-1]
-            normal = np.zeros((3,1),dtype=float)
-            normal[0] = -dzdx
-            normal[1] = -dzdy
-            normal[2] = 1.0000
-            norm = np.linalg.norm(normal)
-            normal = normal/norm
-            normal_img[i,j,0] = normal[0]
-            normal_img[i,j,1] = normal[1]
-            normal_img[i,j,2] = normal[2]                        
+        for j in range(img.shape[0]-1):
+            if i ==0 or j==0:
+                normal_img[i,j,0] = 0
+                normal_img[i,j,1] = 0
+                normal_img[i,j,2] = 0
+            else:
+                dzdx = img[i+1,j] - img[i-1,j]
+                dzdy = img[i,j+1] - img[i,j-1]
+                normal = np.zeros((3,1),dtype=float)
+                normal[0] = -dzdx
+                normal[1] = -dzdy
+                normal[2] = 0.0000
+
+                norm = np.linalg.norm(normal)
+                normal = normal/norm
+                normal_img[i,j,0] = normal[0]*255
+                normal_img[i,j,1] = normal[1]*255
+                normal_img[i,j,2] = normal[2]*255    
+    cv2.imwrite("surface_img_"+str(time_idx)+"__"+str(idx)+".jpg", normal_img)           
+
+
+if __name__ == "__main__":
+    main()
