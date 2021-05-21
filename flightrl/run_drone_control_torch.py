@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 from ruamel.yaml import YAML, dump, RoundTripDumper
 
@@ -91,7 +92,7 @@ def main():
         rsg_root = os.path.dirname(os.path.abspath(__file__))
         log_dir = rsg_root + '/saved'
         saver = U.ConfigurationSaver(log_dir=log_dir)
-        model = PPO('MlpPolicy', env, verbose=2,
+        model = PPO('MultiInputPolicy', env, verbose=2,
                     tensorboard_log=saver.data_dir)
         #model.load(args.weight)
         #if(args.load_weights):

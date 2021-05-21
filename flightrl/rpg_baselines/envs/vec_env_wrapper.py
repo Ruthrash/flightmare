@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.core.fromnumeric import shape
 from gym import spaces
 from stable_baselines3.common.vec_env import VecEnv
 import cv2 as cv
@@ -19,16 +20,26 @@ class FlightEnvVec(VecEnv):
         #self._observation_space = spaces.Box(low=-np.ones(self.num_obs) * np.inf, high=np.ones(self.num_obs) * np.inf, dtype=np.float32)
         
         odom_box = spaces.Box(low=-np.ones(self.num_obs) * np.inf, high=np.ones(self.num_obs) * np.inf, dtype=np.float32)
-        img_box = spaces.Box(low=0, high=50.0, shape=(self.frame_dim[0], self.frame_dim[1]),dtype=np.float32)
-        self._observation_space = spaces.Tuple((odom_box, img_box))
-        
+        print(odom_box.shape)
+        img_box = spaces.Box(low=0, high=50.0, shape=(1,self.frame_dim[0], self.frame_dim[1]),dtype=np.float32)
+        print(img_box.shape )
+        self._observation_space = spaces.Dict({"odom": odom_box, "image": img_box})
+        #self.observation_space = spaces.Dict({"position": spaces.Discrete(2), "velocity": spaces.Discrete(3)})
+
+
         self._action_space = spaces.Box(
             low=np.ones(self.num_acts) * -1.,
             high=np.ones(self.num_acts) * 1.,
             dtype=np.float32)
         #self._observation = np.zeros((self.num_envs, self.num_obs), dtype=np.float32) 
+        #self._observation = np.zeros((self.num_envs, self.num_obs + self.frame_dim[0]* self.frame_dim[1]), dtype=np.float32) 
+        odom_obs = np.zeros((self.num_envs, self.num_obs), dtype=np.float32) 
+        img_obs = np.zeros((self.num_envs, 1 , self.frame_dim[0], self.frame_dim[1]), dtype=np.float32)
+        self._observation = dict()
+        self._observation["odom"] = odom_obs
+        self._observation["image"] = img_obs 
         
-        self._observation = np.zeros((self.num_envs, self.num_obs + self.frame_dim[0]* self.frame_dim[1]), dtype=np.float32) 
+        
         self._images = np.zeros((self.num_envs, self.frame_dim[0], self.frame_dim[1]), dtype=np.float32)
         self._odometry = np.zeros([self.num_envs, self.num_obs], dtype=np.float32)
         self.img_array = np.zeros((self.num_envs, self.frame_dim[0]*self.frame_dim[1]), dtype=np.float32)
@@ -67,12 +78,13 @@ class FlightEnvVec(VecEnv):
         #print(self._odometry.shape, self.img_array.shape)
         
         
-        
-        self._observation = np.concatenate((self._odometry, self.img_array), axis=1)# * concatenating tuples
+        #self._observation = np.concatenate((self._odometry, self.img_array), axis=1)# * concatenating tuples
         
         #print(self._observation.shape)
         # Images are accessible from here, self._images is of shape [self.num_envs, self.frame_dim[0], self.frame_dim[1]]
         self._images = self.obs_array2image()
+        self._observation["odom"] = self._odometry
+        self._observation["image"] = self._images[:,None,:,:]
 
         # ----- Uncomment below to check if images are correct -----
         # if self.count < 100:
