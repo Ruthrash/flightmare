@@ -111,15 +111,16 @@ def main():
     start = timeit.default_timer()
     img = torch.from_numpy(img)
     img = img[None,None,:,:]
-    print('image',img.shape)
+    print('image',img.shape, img.is_cuda)
 
     normal_output = net.forward(img).cpu().numpy()[0,0,:,:,:]
+    print('surface', normal_output.shape )
     
     normal_img = np.zeros((126,126,1),dtype=float)
     normal_img[:,:,0] = normal_output[2,:,:]  
     #normal_img[:,:,1] = normal_output[1,:,:]
     #normal_img[:,:,2] = normal_output[2,:,:]
-    print('normal',normal_output.shape)
+    print('normal',normal_output.shape, normal_output.is_cuda)
 
     cv2.imwrite("torch_surface_img_"+str(time_idx)+"__"+str(idx)+".jpg", normal_img)    
     #print(normal_img.channels())

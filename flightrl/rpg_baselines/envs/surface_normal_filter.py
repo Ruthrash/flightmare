@@ -5,27 +5,30 @@ from torch.functional import norm
 import torch.nn as nn
 import torch.nn.functional as F
 
-#import timeit
+import timeit
+"""
+Calculates surface normal maps given dense depth maps. Uses Simple Haar feature kernels to calculate surface gradients
+"""
 
-class Net(nn.Module):
+class SurfaceNet(nn.Module):
 
     def __init__(self):
-        super(Net, self).__init__()
+        super(SurfaceNet, self).__init__()
         # 1 input image channel, 6 output channels, 5x5 square convolution
         # kernel
         self.convDelYDelZ = nn.Conv2d(1, 1, 3)
         self.convDelXDelZ = nn.Conv2d(1, 1, 3)
-        if torch.cuda.is_available():
-            dev = "cuda:0"
-        else:
-            dev = "cpu" 
-        self.device = torch.device(dev)
-        print("dev!!!", dev)  
+        # if torch.cuda.is_available():
+        # #     dev = "cuda:0"
+        # # else:
+        # #     dev = "cpu" 
+        # # self.device = torch.device(dev)
+        # # print("dev!!!", dev)  
 
     def forward(self, x):
-        #start = timeit.default_timer()
+        start = timeit.default_timer()
         #x = x.to(self.device)
-        nb_channels = x.shape[0]
+        nb_channels = 1#x.shape[1]
         h, w = x.shape[-2:]
 
 
@@ -43,14 +46,12 @@ class Net(nn.Module):
         delzdely = F.conv2d(x, delzdelykernel)
 
         delzdelz = torch.ones(delzdely.shape, dtype=torch.float64)#.to(self.device)
-
+        #print('kernel',delzdelx.shape)
         surface_norm = torch.stack((-delzdelx,-delzdely, delzdelz),2)
- 
-        surface_norm = torch.div(surface_norm,  norm(surface_norm, dim=2))
-        
+        surface_norm = torch.div(surface_norm,  norm(surface_norm, dim=2)[:,:,None,:,:])
         # * normal vector space from [-1.00,1.00] to [0,255] for visualization processes
-        #surface_norm_viz = torch.mul(torch.add(surface_norm, 1.00000),127 )
+        surface_norm_viz = torch.mul(torch.add(surface_norm, 1.00000),127 )
         
-        #end = timeit.default_timer()
-        #print("torch method time", end-start)
+        end = timeit.default_timer()
+        print("torch method time", end-start)
         return surface_norm_viz

@@ -1,8 +1,10 @@
 import numpy as np
+import torch
 from numpy.core.fromnumeric import shape
 from gym import spaces
 from stable_baselines3.common.vec_env import VecEnv
-import cv2 as cv
+from .surface_normal_filter import SurfaceNet
+import cv2 #as cv
 import copy
 
 
@@ -13,6 +15,15 @@ class FlightEnvVec(VecEnv):
         self.num_obs = self.wrapper.getObsDim()
         self.num_acts = self.wrapper.getActDim()
         self.frame_dim = self.wrapper.getFrameDim()
+
+        if torch.cuda.is_available():
+            dev = "cuda:0"
+        else:
+            dev = "cpu" 
+        device = torch.device(dev)
+        self.surfacenet = SurfaceNet()
+        self.surfacenet.to(device)
+
         print("Observations: ", self.num_obs)
         print("Actions: ", self.num_acts)
         print("image shape:", self.frame_dim)
@@ -23,6 +34,9 @@ class FlightEnvVec(VecEnv):
         print(odom_box.shape)
         img_box = spaces.Box(low=0, high=50.0, shape=(1,self.frame_dim[0], self.frame_dim[1]),dtype=np.float32)
         print(img_box.shape )
+        surfaceimg_box = spaces.Box(low=-1.000, high=1.000, shape=(3,self.frame_dim[0], self.frame_dim[1]),dtype=np.float32)
+        print(surfaceimg_box.shape )
+
         self._observation_space = spaces.Dict({"odom": odom_box, "image": img_box})
         #self.observation_space = spaces.Dict({"position": spaces.Discrete(2), "velocity": spaces.Discrete(3)})
 
@@ -41,6 +55,8 @@ class FlightEnvVec(VecEnv):
         
         
         self._images = np.zeros((self.num_envs, self.frame_dim[0], self.frame_dim[1]), dtype=np.float32)
+        self._surfaceimages = np.zeros((self.num_envs, 3 , self.frame_dim[0], self.frame_dim[1]), dtype=np.float32)
+
         self._odometry = np.zeros([self.num_envs, self.num_obs], dtype=np.float32)
         self.img_array = np.zeros((self.num_envs, self.frame_dim[0]*self.frame_dim[1]), dtype=np.float32)
         self._reward = np.zeros(self.num_envs, dtype=np.float32)
@@ -83,6 +99,24 @@ class FlightEnvVec(VecEnv):
         #print(self._observation.shape)
         # Images are accessible from here, self._images is of shape [self.num_envs, self.frame_dim[0], self.frame_dim[1]]
         self._images = self.obs_array2image()
+        images = torch.from_numpy(self._images[:,None,:,:])
+        self._surfaceimages = self.surfacenet(images)
+        # * Save surface images and view if wanted
+        normal_output = self._surfaceimages.cpu().numpy()[2,0,:,:,:]
+        normal_img = np.zeros((126,126,3),dtype=float)
+        normal_img[:,:,0] = normal_output[0,:,:]  
+        normal_img[:,:,1] = normal_output[1,:,:]
+        normal_img[:,:,2] = normal_output[2,:,:]
+        cv2.imwrite("torch_surface_img_.jpg", normal_img)  
+
+
+
+
+
+
+
+        print(self._surfaceimages.shape)
+        print(np.shape(self._images))
         self._observation["odom"] = self._odometry
         self._observation["image"] = self._images[:,None,:,:]
 
@@ -116,6 +150,9 @@ class FlightEnvVec(VecEnv):
         #    self._done.copy(), info.copy()            
     
     def get_images(self):
+        return self._images.copy()
+    
+    def get_surface_images(self):
         return self._images.copy()
 
     def stepUnity(self, action, send_id):
