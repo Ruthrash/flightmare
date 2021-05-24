@@ -50,8 +50,8 @@ class SurfaceNet(nn.Module):
         surface_norm = torch.stack((-delzdelx,-delzdely, delzdelz),2)
         surface_norm = torch.div(surface_norm,  norm(surface_norm, dim=2)[:,:,None,:,:])
         # * normal vector space from [-1.00,1.00] to [0,255] for visualization processes
-        surface_norm_viz = torch.mul(torch.add(surface_norm, 1.00000),127 )
+        #surface_norm_viz = torch.mul(torch.add(surface_norm, 1.00000),127 )
         
         end = timeit.default_timer()
-        print("torch method time", end-start)
-        return surface_norm_viz
+        #print("torch method time", end-start)
+        return surface_norm#_viz

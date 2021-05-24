@@ -94,9 +94,12 @@ def main():
         saver = U.ConfigurationSaver(log_dir=log_dir)
         model = PPO('MultiInputPolicy', env, verbose=2,
                     tensorboard_log=saver.data_dir)
-        #model.load(args.weight)
-        #if(args.load_weights):
-        #    model.load(args.weight)
+        
+        
+        # print("loading", args.weight)
+        # if(args.load_weights != " ./saved/quadrotor_env.zip.zip"):
+        #     model.load(path=args.weight, env=env)
+        #     print("loading", args.weight)
         # tensorboard
         # Make sure that your chrome browser is already on.
         #TensorboardLauncher(saver.data_dir + '/PPO2_1')

@@ -31,13 +31,13 @@ class FlightEnvVec(VecEnv):
         #self._observation_space = spaces.Box(low=-np.ones(self.num_obs) * np.inf, high=np.ones(self.num_obs) * np.inf, dtype=np.float32)
         
         odom_box = spaces.Box(low=-np.ones(self.num_obs) * np.inf, high=np.ones(self.num_obs) * np.inf, dtype=np.float32)
-        print(odom_box.shape)
         img_box = spaces.Box(low=0, high=50.0, shape=(1,self.frame_dim[0], self.frame_dim[1]),dtype=np.float32)
-        print(img_box.shape )
-        surfaceimg_box = spaces.Box(low=-1.000, high=1.000, shape=(3,self.frame_dim[0], self.frame_dim[1]),dtype=np.float32)
-        print(surfaceimg_box.shape )
+        surfaceimg_box = spaces.Box(low=-1.000, high=1.000, shape=(3,self.frame_dim[0]-2, self.frame_dim[1]-2),dtype=np.float32)
 
-        self._observation_space = spaces.Dict({"odom": odom_box, "image": img_box})
+        self._observation_space = spaces.Dict({"odom": odom_box, 
+                                               "image": img_box,
+                                               "surface_image":surfaceimg_box,   
+                                            })
         #self.observation_space = spaces.Dict({"position": spaces.Discrete(2), "velocity": spaces.Discrete(3)})
 
 
@@ -49,13 +49,15 @@ class FlightEnvVec(VecEnv):
         #self._observation = np.zeros((self.num_envs, self.num_obs + self.frame_dim[0]* self.frame_dim[1]), dtype=np.float32) 
         odom_obs = np.zeros((self.num_envs, self.num_obs), dtype=np.float32) 
         img_obs = np.zeros((self.num_envs, 1 , self.frame_dim[0], self.frame_dim[1]), dtype=np.float32)
+        surfaceimg_obs =  np.zeros((self.num_envs, 3 , self.frame_dim[0]-2, self.frame_dim[1]-2), dtype=np.float32)
         self._observation = dict()
         self._observation["odom"] = odom_obs
-        self._observation["image"] = img_obs 
+        self._observation["image"] = img_obs
+        self._observation["surface_image"] = surfaceimg_obs 
         
         
         self._images = np.zeros((self.num_envs, self.frame_dim[0], self.frame_dim[1]), dtype=np.float32)
-        self._surfaceimages = np.zeros((self.num_envs, 3 , self.frame_dim[0], self.frame_dim[1]), dtype=np.float32)
+        self._surfaceimages = np.zeros((self.num_envs, 3 , self.frame_dim[0]-2, self.frame_dim[1]-2), dtype=np.float32)
 
         self._odometry = np.zeros([self.num_envs, self.num_obs], dtype=np.float32)
         self.img_array = np.zeros((self.num_envs, self.frame_dim[0]*self.frame_dim[1]), dtype=np.float32)
@@ -102,12 +104,12 @@ class FlightEnvVec(VecEnv):
         images = torch.from_numpy(self._images[:,None,:,:])
         self._surfaceimages = self.surfacenet(images)
         # * Save surface images and view if wanted
-        normal_output = self._surfaceimages.cpu().numpy()[2,0,:,:,:]
-        normal_img = np.zeros((126,126,3),dtype=float)
-        normal_img[:,:,0] = normal_output[0,:,:]  
-        normal_img[:,:,1] = normal_output[1,:,:]
-        normal_img[:,:,2] = normal_output[2,:,:]
-        cv2.imwrite("torch_surface_img_.jpg", normal_img)  
+        # normal_output = self._surfaceimages.cpu().numpy()[2,0,:,:,:]
+        # normal_img = np.zeros((126,126,3),dtype=float)
+        # normal_img[:,:,0] = normal_output[0,:,:]  
+        # normal_img[:,:,1] = normal_output[1,:,:]
+        # normal_img[:,:,2] = normal_output[2,:,:]
+        # cv2.imwrite("torch_surface_img_.jpg", normal_img)  
 
 
 
@@ -115,11 +117,12 @@ class FlightEnvVec(VecEnv):
 
 
 
-        print(self._surfaceimages.shape)
-        print(np.shape(self._images))
+        #print(self._surfaceimages[:,0,:,:,:].cpu().numpy())
+        # print(np.shape(self._images))
+        # print("saving",self._images[:,None,:,:].shape)
         self._observation["odom"] = self._odometry
         self._observation["image"] = self._images[:,None,:,:]
-
+        self._observation["surface_image"] = self._surfaceimages[:,0,:,:,:].cpu().numpy()
         # ----- Uncomment below to check if images are correct -----
         # if self.count < 100:
         #     cv.imwrite('images/img'+str(self.count)+'.png', self._images[0,:,:]/15*255)
